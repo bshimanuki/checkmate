@@ -1,5 +1,6 @@
 import json
 import re
+import string
 import typing
 from urllib.parse import urljoin
 
@@ -441,6 +442,12 @@ async def parse_html_mh25(client: scraper_types.Client, url: str) -> Hunt:
 
 
 async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
+    land_of_no_name_slugs = [
+        3842, 9283, 1736, 6147, 2074, 4519, 8063, 1259,
+        7642, 3961, 5823, 9350, 2871, 6714, 8402, 4295,
+        1906, 3175, 7480, 6592, 2843, 9810, 1037, 5671,
+        8904, 2129,
+    ]
     data = await client.try_fetch(url)
     soup = bs4.BeautifulSoup(data, "html5lib", from_encoding="utf-8")
 
@@ -492,8 +499,11 @@ async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
 
             name = p_info.get("title") or tp.get("title") or ""
             try:
-                int(p_slug)
+                val = int(p_slug)
                 name += f" ({p_slug})"
+                if val in land_of_no_name_slugs:
+                    letter = string.ascii_uppercase[land_of_no_name_slugs.index(val)]
+                    name = f"[{letter}] {name}"
             except ValueError:
                 pass
             answer = p_info.get("answer") or tp.get("answer") or ""
@@ -521,8 +531,11 @@ async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
             tp = t_puzzles.get(p_slug, {})
             name = p_info.get("title") or tp.get("title") or ""
             try:
-                int(p_slug)
+                val = int(p_slug)
                 name += f" ({p_slug})"
+                if val in land_of_no_name_slugs:
+                    letter = string.ascii_uppercase[land_of_no_name_slugs.index(val)]
+                    name = f"[{letter}] {name}"
             except ValueError:
                 pass
             answer = p_info.get("answer") or tp.get("answer") or ""

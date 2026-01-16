@@ -700,6 +700,9 @@ def auto_create_new_puzzles(dry_run=True, manual=True) -> dict | None:
             # MH25
             if link is not None and puzzle["link"] is None:
                 updates["link"] = link
+            # MH26 Land of No Name
+            if scraped_puzzle.name and scraped_puzzle.name != puzzle["name"]:
+                updates["name"] = scraped_puzzle.name
             if (
                 is_explicitly_unlocked
                 and puzzle["status"] == models.Puzzle.LOCKED_STATUS
