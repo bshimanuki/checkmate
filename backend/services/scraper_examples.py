@@ -442,7 +442,8 @@ async def parse_html_mh25(client: scraper_types.Client, url: str) -> Hunt:
 
 async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
     data = await client.try_fetch(url)
-    soup = bs4.BeautifulSoup(data, "html5lib")
+    soup = bs4.BeautifulSoup(data, "html5lib", from_encoding="utf-8")
+
     hunt = Hunt()
 
     script = soup.find(
@@ -452,7 +453,7 @@ async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
     if not script:
         raise ValueError("No script found")
 
-    content = script.decode_contents()
+    content = script.string or ""
 
     p_match = re.search(r"window\.initialAllPuzzlesState\s*=\s*(\{.*?\});", content)
     if not p_match:
@@ -489,13 +490,20 @@ async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
             )
             tp = t_puzzles.get(p_slug, {})
 
+            name = p_info.get("title") or tp.get("title") or ""
+            try:
+                int(p_slug)
+                name += f" ({p_slug})"
+            except ValueError:
+                pass
+            answer = p_info.get("answer") or tp.get("answer") or ""
             hunt.puzzles.append(
                 Puzzle(
-                    name=p_info.get("title") or tp.get("title") or p_slug,
+                    name=name,
                     link=urljoin(url, f"/puzzles/{p_slug}"),
                     round_names=[r_name],
-                    is_solved=tp.get("solved", False),
-                    answer=tp.get("answer") or "",
+                    is_solved=bool(answer) or tp.get("solved", False),
+                    answer=answer,
                     is_meta=tp.get("is_meta", False) or p_info.get("is_meta", False),
                     is_locked=tp.get("locked") == "unlockable"
                     or p_info.get("state") == "unlockable",
@@ -511,13 +519,20 @@ async def parse_html_mh26(client: scraper_types.Client, url: str) -> Hunt:
             seen_p_slugs.add(p_slug)
 
             tp = t_puzzles.get(p_slug, {})
+            name = p_info.get("title") or tp.get("title") or ""
+            try:
+                int(p_slug)
+                name += f" ({p_slug})"
+            except ValueError:
+                pass
+            answer = p_info.get("answer") or tp.get("answer") or ""
             hunt.puzzles.append(
                 Puzzle(
-                    name=p_info.get("title") or tp.get("name") or p_slug,
+                    name=name,
                     link=urljoin(url, f"/puzzles/{p_slug}"),
                     round_names=[r_name],
-                    is_solved=tp.get("solved", False),
-                    answer=tp.get("answer") or "",
+                    is_solved=bool(answer) or tp.get("solved", False),
+                    answer=answer,
                     is_meta=p_info.get("is_meta", False) or tp.get("is_meta", False),
                     is_locked=p_info.get("state") == "unlockable"
                     or tp.get("locked") == "unlockable",
